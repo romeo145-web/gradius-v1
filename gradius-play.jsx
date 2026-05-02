@@ -23,7 +23,8 @@ function initState() {
     stars: Array.from({ length: 110 }, () => ({ x: Math.random() * W, y: Math.random() * H, s: Math.random() * 2 + 0.5, v: Math.random() * 1.5 + 0.5 })),
     spawnTimer: 0, shootTimer: 0, missileCooldown: 0,
     hasMissile: false, hasDouble: false, hasLaser: false, hasShield: false,
-    wave: 0, lives: 3, bossSpawned: false, bossTimer: 30, bossCount: 0,
+    wave: 0, lives: 3, bossSpawned: false, bossTimer: 8, bossCount: 0,
+    finalBossKilled: false, finalBossDefeated: false, clearTimer: 0,
   };
 }
 
@@ -37,24 +38,26 @@ function GameClear({ score, onRetry, onTitle }) {
     const id = setInterval(() => setTick(t => t + 1), 50);
     return () => clearInterval(id);
   }, []);
+  const scale = Math.min(1 + tick * 0.02, 3); // Gradually scale up to 3x
   return (
     <div style={{ background:"#000010", width:"100%", minHeight:550, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"monospace", color:"#fff", position:"relative", overflow:"hidden" }}>
       {stars.map((st, i) => (
         <div key={i} style={{ position:"absolute", left:`${st.x}%`, top:`${st.y}%`, width:st.s, height:st.s, borderRadius:"50%", background:`hsl(${(tick*3+i*20)%360},100%,80%)`, opacity: 0.6 + 0.4*Math.sin(tick*0.1+st.t) }} />
       ))}
-      <div style={{ fontSize:14, color:"#ff0", letterSpacing:6, marginBottom:16, opacity: tick > 5 ? 1 : 0, transition:"opacity 1s" }}>✨ CONGRATULATIONS ✨</div>
-      <div style={{ fontSize:48, fontWeight:"bold", letterSpacing:6, background:"linear-gradient(90deg,#f0f,#0cf,#ff0,#0f0,#f0f)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundSize:"200%", backgroundPosition:`${tick*2}% 0`, textShadow:"none", filter:"drop-shadow(0 0 10px #f0f)" }}>
+      <div style={{ fontSize:48, fontWeight:"bold", letterSpacing:6, background:"linear-gradient(90deg,#f0f,#0cf,#ff0,#0f0,#f0f)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundSize:"200%", backgroundPosition:`${tick*2}% 0`, textShadow:"none", filter:"drop-shadow(0 0 10px #f0f)", marginBottom: 20 }}>
         GAME CLEAR
       </div>
       <div style={{ fontSize:22, marginTop:20, color:"#ff0" }}>SCORE: {score.toString().padStart(7,"0")}</div>
-      <div style={{ marginTop:30, fontSize:14, color:"#adf", lineHeight:2.2, textAlign:"center", maxWidth:400 }}>
-        最終ボスを倒した！<br/>
-        宇宙の平和が守られた。<br/>
-        君は真のグラディウスパイロットだ！🚀
+      <div style={{ marginTop:30, fontSize:24, color:"#f00", lineHeight:2.2, textAlign:"center", maxWidth:400, fontWeight:"bold" }}>
+        次は鬼地獄モードだ！
       </div>
       <div style={{ display:"flex", gap:16, marginTop:36 }}>
-        <button onClick={onRetry} style={{ padding:"12px 36px", fontSize:16, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:2 }}>もう一度</button>
-        <button onClick={onTitle} style={{ padding:"12px 36px", fontSize:16, background:"transparent", border:"2px solid #88f", borderRadius:8, color:"#aaf", cursor:"pointer" }}>タイトルへ</button>
+        <button onClick={onRetry} style={{ padding:"16px 44px", fontSize:16, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:2, minWidth:"140px", minHeight:"52px" }}>もう一度</button>
+        <button onClick={onTitle} style={{ padding:"16px 44px", fontSize:16, background:"transparent", border:"2px solid #88f", borderRadius:8, color:"#aaf", cursor:"pointer", minWidth:"140px", minHeight:"52px" }}>タイトルへ</button>
+      </div>
+      {/* Boss 3 image scaling up */}
+      <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) scale(${scale})`, opacity: tick > 10 ? 1 : 0, transition:"opacity 1s" }}>
+        <img src={BOSS3_SRC} alt="Boss 3" style={{ width:"110px", height:"110px" }} />
       </div>
     </div>
   );
@@ -196,10 +199,19 @@ export default function App() {
     if (s.bossTimer <= 0 && !s.bossSpawned) {
       s.bossSpawned = true;
       s.bossCount++;
-      const boss = mkEnemy(W + 70, H / 2, "boss");
-      boss.imgIdx = Math.min(s.bossCount - 1, 3);
-      if (s.bossCount >= 4) { boss.hp = 400; boss.isFinal = true; }
-      s.enemies.push(boss);
+      if (s.bossCount >= 4) {
+        const finalBoss = mkEnemy(W + 70, H / 2, "boss");
+        finalBoss.imgIdx = 3;
+        finalBoss.hp = 400;
+        finalBoss.isFinal = true;
+        s.enemies.push(finalBoss);
+        const boss1 = mkEnemy(W + 70, H / 3, "boss"); boss1.imgIdx = 0; s.enemies.push(boss1);
+        const boss2 = mkEnemy(W + 70, (H * 2) / 3, "boss"); boss2.imgIdx = 1; s.enemies.push(boss2);
+      } else {
+        const boss = mkEnemy(W + 70, H / 2, "boss");
+        boss.imgIdx = Math.min(s.bossCount - 1, 3);
+        s.enemies.push(boss);
+      }
     }
 
     for (const e of s.enemies) {
@@ -240,12 +252,28 @@ export default function App() {
             const cnt = e.type==="boss"?28:8;
             for (let p=0;p<cnt;p++) s.particles.push({ x:e.x, y:e.y, vx:(Math.random()-.5)*280, vy:(Math.random()-.5)*280, life:0.7, color:e.type==="boss"?"#f80":"#fa0" });
             if (Math.random()<(e.type==="mid"?.85:.4)) s.capsules.push({ x:e.x, y:e.y, type:POWER_TYPES[Math.floor(Math.random()*POWER_TYPES.length)], vx:-55, vy:0 });
-            if (e.type==="boss") { if (e.isFinal) { s.finalBossDefeated = true; s.clearTimer = 3.5; for(let p=0;p<60;p++) s.particles.push({x:e.x,y:e.y,vx:(Math.random()-.5)*500,vy:(Math.random()-.5)*500,life:3.5,color:["#f80","#ff0","#f0f","#fff","#0ff"][Math.floor(Math.random()*5)]}); setFinalScore(s.score); } s.bossSpawned=false; s.bossTimer=22; }
+            if (e.type==="boss") {
+              if (e.isFinal) {
+                s.finalBossKilled = true;
+                for (let p = 0; p < 60; p++) s.particles.push({ x: e.x, y: e.y, vx: (Math.random()-.5)*500, vy: (Math.random()-.5)*500, life: 3.5, color:["#f80","#ff0","#f0f","#fff","#0ff"][Math.floor(Math.random()*5)] });
+              }
+            }
           }
         }
       }
     }
     s.bullets = s.bullets.filter((_,i)=>!deadBullets.has(i));
+
+    s.enemies = s.enemies.filter(e => e.x > -100 && e.hp > 0);
+    if (s.bossSpawned && !s.enemies.some(e => e.type === "boss")) {
+      s.bossSpawned = false;
+      s.bossTimer = 6;
+      if (s.finalBossKilled && !s.finalBossDefeated) {
+        s.finalBossDefeated = true;
+        s.clearTimer = 3.5;
+        setFinalScore(s.score);
+      }
+    }
 
     s.capsules = s.capsules.filter(c => {
       c.x += c.vx * dt;
@@ -447,7 +475,7 @@ export default function App() {
       <div style={{ marginTop:34, fontSize:13, color:"#aaa", lineHeight:2.2, textAlign:"center" }}>
         🎮 移動: 矢印キー / WASD<br/>🔫 ショット: スペース / Z<br/>⚡ パワーアップ適用: Enter / X
       </div>
-      <button onClick={startGame} style={{ marginTop:34, padding:"14px 52px", fontSize:20, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:4, boxShadow:"0 0 20px #0cf" }}>START</button>
+      <button onClick={startGame} style={{ marginTop:34, padding:"18px 60px", fontSize:20, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:4, boxShadow:"0 0 20px #0cf", minWidth:"160px", minHeight:"56px" }}>START</button>
     </div>
   );
 
@@ -455,8 +483,8 @@ export default function App() {
     <div style={{ background:"#000010", width:"100%", minHeight:H+70, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"monospace", color:"#fff" }}>
       <div style={{ fontSize:48, fontWeight:"bold", color:"#f44", textShadow:"0 0 20px #f00" }}>GAME OVER</div>
       <div style={{ fontSize:26, marginTop:20, color:"#ff0" }}>SCORE: {finalScore.toString().padStart(7,"0")}</div>
-      <button onClick={startGame} style={{ marginTop:40, padding:"12px 44px", fontSize:18, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:3 }}>RETRY</button>
-      <button onClick={()=>{ audioRef.current?.pause(); setScreen("title"); }} style={{ marginTop:14, padding:"10px 32px", fontSize:16, background:"transparent", border:"2px solid #557", borderRadius:8, color:"#aaa", cursor:"pointer" }}>TITLE</button>
+      <button onClick={startGame} style={{ marginTop:40, padding:"16px 50px", fontSize:18, fontWeight:"bold", background:"linear-gradient(135deg,#0080ff,#00c0ff)", border:"none", borderRadius:8, color:"#fff", cursor:"pointer", letterSpacing:3, minWidth:"140px", minHeight:"52px" }}>RETRY</button>
+      <button onClick={()=>{ audioRef.current?.pause(); setScreen("title"); }} style={{ marginTop:14, padding:"14px 40px", fontSize:16, background:"transparent", border:"2px solid #557", borderRadius:8, color:"#aaa", cursor:"pointer", minWidth:"120px", minHeight:"48px" }}>TITLE</button>
     </div>
   );
 
