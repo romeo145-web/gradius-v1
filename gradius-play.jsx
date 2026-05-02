@@ -489,17 +489,29 @@ export default function App() {
   );
 
   return (
-    <div style={{ userSelect:"none", display:"flex", flexDirection:"column", alignItems:"center", background:"#000" }}>
-      <canvas ref={canvasRef} width={W} height={H} style={{ display:"block", border:"2px solid #113", maxWidth:"100%" }} />
-      <div style={{ display:"flex", gap:10, marginTop:10, padding:"0 10px", flexWrap:"wrap", justifyContent:"center" }}>
-        {[["↑","ArrowUp"],["↓","ArrowDown"],["←","ArrowLeft"],["→","ArrowRight"]].map(([l,k])=>(
-          <button key={k} onPointerDown={()=>pressKey(k)} onPointerUp={()=>releaseKey(k)} onPointerLeave={()=>releaseKey(k)}
-            style={{ width:50,height:50,fontSize:18,background:"#1a1a2e",border:"1px solid #334",borderRadius:8,color:"#fff",cursor:"pointer",userSelect:"none",touchAction:"none" }}>{l}</button>
-        ))}
-        <button onPointerDown={()=>pressKey(" ")} onPointerUp={()=>releaseKey(" ")} onPointerLeave={()=>releaseKey(" ")}
-          style={{ width:60,height:50,fontSize:12,background:"#042",border:"1px solid #0a4",borderRadius:8,color:"#0f0",cursor:"pointer",userSelect:"none",touchAction:"none",fontFamily:"monospace" }}>SHOT</button>
-        <button onPointerDown={()=>tapKey("Enter")} onPointerUp={()=>{}}
-          style={{ width:66,height:50,fontSize:11,background:"#204",border:"1px solid #84a",borderRadius:8,color:"#c8f",cursor:"pointer",userSelect:"none",touchAction:"none",fontFamily:"monospace" }}>POWER</button>
+    <div style={{ userSelect:"none", display:"flex", flexDirection:"column", alignItems:"center", background:"#000", width:"100%", minHeight:"100vh", padding:"12px 0" }}>
+      <div style={{ width:"100%", maxWidth:780, padding:"0 12px", boxSizing:"border-box" }}>
+        <canvas ref={canvasRef} width={W} height={H} style={{ display:"block", border:"2px solid #113", width:"100%", height:"auto", borderRadius:12 }} />
+        <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:12, width:"100%", alignItems:"center" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"64px 64px 64px", gridTemplateRows:"64px 64px", gap:10, justifyContent:"center" }}>
+            <div />
+            <button onPointerDown={()=>pressKey("ArrowUp")} onPointerUp={()=>releaseKey("ArrowUp")} onPointerLeave={()=>releaseKey("ArrowUp")}
+              style={{ width:64,height:64,fontSize:24,background:"#1a1a2e",border:"1px solid #334",borderRadius:16,color:"#fff",cursor:"pointer",userSelect:"none",touchAction:"none" }}>↑</button>
+            <div />
+            <button onPointerDown={()=>pressKey("ArrowLeft")} onPointerUp={()=>releaseKey("ArrowLeft")} onPointerLeave={()=>releaseKey("ArrowLeft")}
+              style={{ width:64,height:64,fontSize:24,background:"#1a1a2e",border:"1px solid #334",borderRadius:16,color:"#fff",cursor:"pointer",userSelect:"none",touchAction:"none" }}>←</button>
+            <button onPointerDown={()=>pressKey("ArrowDown")} onPointerUp={()=>releaseKey("ArrowDown")} onPointerLeave={()=>releaseKey("ArrowDown")}
+              style={{ width:64,height:64,fontSize:24,background:"#1a1a2e",border:"1px solid #334",borderRadius:16,color:"#fff",cursor:"pointer",userSelect:"none",touchAction:"none" }}>↓</button>
+            <button onPointerDown={()=>pressKey("ArrowRight")} onPointerUp={()=>releaseKey("ArrowRight")} onPointerLeave={()=>releaseKey("ArrowRight")}
+              style={{ width:64,height:64,fontSize:24,background:"#1a1a2e",border:"1px solid #334",borderRadius:16,color:"#fff",cursor:"pointer",userSelect:"none",touchAction:"none" }}>→</button>
+          </div>
+          <div style={{ display:"flex", gap:12, width:"100%", justifyContent:"center", flexWrap:"wrap" }}>
+            <button onPointerDown={()=>pressKey(" ")} onPointerUp={()=>releaseKey(" ")} onPointerLeave={()=>releaseKey(" ")}
+              style={{ flex:1,minWidth:120,height:60,fontSize:16,background:"#042",border:"1px solid #0a4",borderRadius:16,color:"#0f0",cursor:"pointer",userSelect:"none",touchAction:"none",fontFamily:"monospace" }}>SHOT</button>
+            <button onPointerDown={()=>tapKey("Enter")} onPointerUp={()=>{}}
+              style={{ flex:1,minWidth:120,height:60,fontSize:16,background:"#204",border:"1px solid #84a",borderRadius:16,color:"#c8f",cursor:"pointer",userSelect:"none",touchAction:"none",fontFamily:"monospace" }}>POWER</button>
+          </div>
+        </div>
       </div>
     </div>
   );
