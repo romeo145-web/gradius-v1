@@ -106,7 +106,66 @@ export default function App() {
     const up = (e) => { keysRef.current[e.key] = false; };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
+
+    // Touch events for swipe control
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isSwiping = true;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isSwiping || e.touches.length !== 1) return;
+      e.preventDefault(); // Prevent scrolling
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const deltaX = touchX - touchStartX;
+      const deltaY = touchY - touchStartY;
+
+      // Clear previous directions
+      keysRef.current["ArrowUp"] = false;
+      keysRef.current["ArrowDown"] = false;
+      keysRef.current["ArrowLeft"] = false;
+      keysRef.current["ArrowRight"] = false;
+
+      // Determine direction based on swipe
+      const threshold = 30; // Minimum distance to consider as swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (Math.abs(deltaX) > threshold) {
+          keysRef.current[deltaX > 0 ? "ArrowRight" : "ArrowLeft"] = true;
+        }
+      } else {
+        if (Math.abs(deltaY) > threshold) {
+          keysRef.current[deltaY > 0 ? "ArrowDown" : "ArrowUp"] = true;
+        }
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      isSwiping = false;
+      keysRef.current["ArrowUp"] = false;
+      keysRef.current["ArrowDown"] = false;
+      keysRef.current["ArrowLeft"] = false;
+      keysRef.current["ArrowRight"] = false;
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => { 
+      window.removeEventListener("keydown", down); 
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -489,10 +548,10 @@ export default function App() {
   );
 
   return (
-    <div style={{ userSelect:"none", display:"flex", flexDirection:"column", alignItems:"center", background:"#000", width:"100%", minHeight:"100vh", padding:"12px 0" }}>
-      <div style={{ width:"100%", maxWidth:780, padding:"0 12px", boxSizing:"border-box" }}>
-        <canvas ref={canvasRef} width={W} height={H} style={{ display:"block", border:"2px solid #113", width:"100%", height:"auto", borderRadius:12 }} />
-        <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:12, width:"100%", alignItems:"center" }}>
+    <div style={{ userSelect:"none", display:"flex", flexDirection:"column", alignItems:"center", background:"#000", width:"100%", minHeight:"100vh", padding:"12px 0", overflow:"hidden" }}>
+      <div style={{ width:"100%", maxWidth:780, padding:"0 12px", boxSizing:"border-box", display:"flex", justifyContent:"center" }}>
+        <canvas ref={canvasRef} width={W} height={H} style={{ display:"block", border:"2px solid #113", aspectRatio:"16/9", maxWidth:"100%", maxHeight:"56.25vw", borderRadius:12 }} />
+        <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:12, width:"100%", alignItems:"center", maxWidth:780 }}>
           <div style={{ display:"grid", gridTemplateColumns:"64px 64px 64px", gridTemplateRows:"64px 64px", gap:10, justifyContent:"center" }}>
             <div />
             <button onPointerDown={()=>pressKey("ArrowUp")} onPointerUp={()=>releaseKey("ArrowUp")} onPointerLeave={()=>releaseKey("ArrowUp")}
