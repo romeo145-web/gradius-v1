@@ -64,6 +64,8 @@ export default function App() {
   const [screen, setScreen] = useState("title");
   const [endTimer, setEndTimer] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
+  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+  const [isJoystickActive, setIsJoystickActive] = useState(false);
   const stateRef = useRef(null);
   const keysRef = useRef({});
   const canvasRef = useRef(null);
